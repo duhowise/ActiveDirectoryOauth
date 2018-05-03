@@ -15,7 +15,7 @@ namespace ActiveDirectoryAuth.Controllers
 
         public AccountController()
         {
-            _userManager=new ActiveDirectoryManager(ConfigurationManager.AppSettings["IpAddress"], ConfigurationManager.AppSettings["Domain"], ConfigurationManager.AppSettings["ServiceUSerName"], ConfigurationManager.AppSettings["ServicePassword"]);
+            _userManager=new ActiveDirectoryManager(ConfigurationManager.AppSettings["IpAddress"], ConfigurationManager.AppSettings["DomainName"], ConfigurationManager.AppSettings["ServiceUSerName"], ConfigurationManager.AppSettings["ServicePassword"]);
         }
 
 
