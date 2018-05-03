@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Configuration;
 using System.DirectoryServices.AccountManagement;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -20,7 +21,7 @@ namespace ActiveDirectoryAuth
 
             context.OwinContext.Response.Headers.Add("Access-Control-Allow-Origin",new []{"*"});
 
-          var principalContext = new ActiveDirectoryManager("192.168.183.129", "DC=Devhost,DC=com", "Administrator", "D3vMachin3").GetPrincipalContext();
+          var principalContext = new ActiveDirectoryManager(ConfigurationManager.AppSettings["IpAddress"], ConfigurationManager.AppSettings["Domain"], ConfigurationManager.AppSettings["ServiceUSerName"], ConfigurationManager.AppSettings["ServicePassword"]).GetPrincipalContext();
 
             using (principalContext)
             {

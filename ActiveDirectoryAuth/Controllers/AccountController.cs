@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Configuration;
 using System.DirectoryServices.AccountManagement;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,7 +15,7 @@ namespace ActiveDirectoryAuth.Controllers
 
         public AccountController()
         {
-            _userManager=new ActiveDirectoryManager("192.168.183.129", "DC=Devhost,DC=com", "Administrator", "D3vMachin3");
+            _userManager=new ActiveDirectoryManager(ConfigurationManager.AppSettings["IpAddress"], ConfigurationManager.AppSettings["Domain"], ConfigurationManager.AppSettings["ServiceUSerName"], ConfigurationManager.AppSettings["ServicePassword"]);
         }
 
 
