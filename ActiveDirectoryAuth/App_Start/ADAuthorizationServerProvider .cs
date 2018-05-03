@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Configuration;
 using System.DirectoryServices.AccountManagement;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using ActiveDirectoryAuth.Models;
 using Microsoft.Owin.Security;
 using Microsoft.Owin.Security.OAuth;
 
@@ -21,17 +23,28 @@ namespace ActiveDirectoryAuth
 
             context.OwinContext.Response.Headers.Add("Access-Control-Allow-Origin",new []{"*"});
 
-          var principalContext = new ActiveDirectoryManager(ConfigurationManager.AppSettings["IpAddress"], ConfigurationManager.AppSettings["DomainName"], ConfigurationManager.AppSettings["ServiceUSerName"], ConfigurationManager.AppSettings["ServicePassword"]).GetPrincipalContext();
-
-            using (principalContext)
+            using (var dbcontext = new AdContext())
             {
-                var isValid = principalContext.ValidateCredentials(context.UserName, context.Password);
-                if (!isValid)
+                var config = dbcontext.DirectorySetups.FirstOrDefault();
+                var domain = config?.DomainName.Split('.');
+
+                if (domain != null)
                 {
-                    context.SetError("invalid_grant","The username or password is incorrect");
-                    return Task.FromResult<object>(null);
+                    var principalContext = new ActiveDirectoryManager(config.IpAddress, $"DC={domain[0]},DC={domain[1]}", config.ServiceUserName, config.ServicePassword).GetPrincipalContext();
+                    using (principalContext)
+                    {
+                        var isValid = principalContext.ValidateCredentials(context.UserName, context.Password);
+                        if (!isValid)
+                        {
+                            context.SetError("invalid_grant", "The username or password is incorrect");
+                            return Task.FromResult<object>(null);
+                        }
+                    }
+
                 }
+
             }
+           
 
             var identity = new ClaimsIdentity(context.Options.AuthenticationType);
             identity.AddClaim(new Claim(ClaimTypes.Name, context.UserName));
