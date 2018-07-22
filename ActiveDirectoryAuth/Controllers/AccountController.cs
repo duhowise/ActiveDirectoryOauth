@@ -4,11 +4,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Web.Http;
 using ActiveDirectoryAuth.Models;
+using ActiveDirectoryAuth.Services;
+using Microsoft.AspNet.Identity;
 
 namespace ActiveDirectoryAuth.Controllers
 {
-    [RoutePrefix("api/Account")]
-    public class AccountController : ApiController
+	[RoutePrefix("api/Account")]
+    public partial class AccountController : ApiController
     {
         private readonly ActiveDirectoryManager _userManager = null;
 
@@ -112,5 +114,55 @@ namespace ActiveDirectoryAuth.Controllers
             return Ok(new{state=false,message="user not found"});
         }
 
-    }
+
+	    [Authorize]
+	    [Route("OTP")]
+	    [HttpPost]
+	    public async Task<IHttpActionResult> GetOtp(LoginModel login)
+	    {
+		    if (!ModelState.IsValid)
+		    {
+			    return BadRequest(ModelState);
+		    }
+
+		    var valid =  _userManager.ValidateCredentials(login.UserName, login.Password);
+
+
+
+		    if (!valid) return NotFound();
+		    var user = _userManager.GetUser(login.UserName);
+		    var code = TimeSensitivePassCode.GetListOfOtPs(user.Psk)[1];
+		    if (!string.IsNullOrEmpty(user.VoiceTelephoneNumber))
+		    {
+			   await   new SmsService().SendAsync(new IdentityMessage
+			 {
+				 Body = $"Your Pin Is:\n {code}",
+				 Destination = user.VoiceTelephoneNumber
+			 });
+		    }
+		    else
+		    {
+			    ModelState.AddModelError("PhoneNumber", "user's Phone number is not available");
+			    return BadRequest(ModelState);
+		    }
+		    return Ok(code);
+	    }
+		[Authorize]
+	    [Route("Verify")]
+	    [HttpPost]
+	    public async Task<IHttpActionResult> VerifyOtp(VerifyOtpModel login)
+	    {
+		    if (!ModelState.IsValid)
+		    {
+			    return BadRequest(ModelState);
+		    }
+
+		    var user = await Task.FromResult(_userManager.ValidateCredentials(login.UserName, login.Password));
+
+		    if (user == null) return NotFound();
+		    var state = TimeSensitivePassCode.GetListOfOtPs(user.Psk).Any(c => c.Equals(login.Code));
+		    return Ok(new { state = state });
+	    }
+
+	}
 }
