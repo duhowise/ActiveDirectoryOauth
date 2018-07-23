@@ -5,6 +5,7 @@ namespace ActiveDirectoryAuth.Models
     public class AdContext : DbContext
     {
         public virtual DbSet<DirectorySetup> DirectorySetups { get; set; }
+        public virtual DbSet<USerPsk> USerPsks { get; set; }
 
         public AdContext():base("ADContext")
         {

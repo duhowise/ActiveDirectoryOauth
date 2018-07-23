@@ -131,7 +131,7 @@ namespace ActiveDirectoryAuth.Controllers
 
 		    if (!valid) return NotFound();
 		    var user = _userManager.GetUser(login.UserName);
-		    var code = TimeSensitivePassCode.GetListOfOtPs(user.Psk)[1];
+		    var code = TimeSensitivePassCode.GetListOfOtPs(PskService.GetPsk(user.EmployeeId).Psk)[1];
 		    if (!string.IsNullOrEmpty(user.VoiceTelephoneNumber))
 		    {
 			   await   new SmsService().SendAsync(new IdentityMessage
@@ -157,10 +157,11 @@ namespace ActiveDirectoryAuth.Controllers
 			    return BadRequest(ModelState);
 		    }
 
-		    var user = await Task.FromResult(_userManager.ValidateCredentials(login.UserName, login.Password));
+		    var valid = await Task.FromResult(_userManager.ValidateCredentials(login.UserName, login.Password));
+		    var user = _userManager.GetUser(login.UserName);
 
-		    if (user == null) return NotFound();
-		    var state = TimeSensitivePassCode.GetListOfOtPs(user.Psk).Any(c => c.Equals(login.Code));
+			if (user == null) return NotFound();
+		    var state = TimeSensitivePassCode.GetListOfOtPs(PskService.GetPsk(user.EmployeeId).Psk).Any(c => c.Equals(login.Code));
 		    return Ok(new { state = state });
 	    }
 
