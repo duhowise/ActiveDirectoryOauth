@@ -16,9 +16,7 @@ namespace ActiveDirectoryAuth.Controllers
 
         public AccountController()
         {
-           
-
-            using (var context = new AdContext())
+           using (var context = new AdContext())
             {
                 var config = context.DirectorySetups.AsNoTracking().FirstOrDefault();
                 var domain = config?.DomainName.Split('.');
@@ -49,7 +47,32 @@ namespace ActiveDirectoryAuth.Controllers
             return Ok(new { state = true, data = result.Select(s => new UserEntry { EmailAddress = s.EmailAddress, EmployeeId = s.EmployeeId, FirstName = s.GivenName, LastName = s.Surname, MiddleName = s.MiddleName, Telephone = s.VoiceTelephoneNumber, UserName = s.SamAccountName }) });
 
         }
-
+	   
+		[Route("{config}")]
+	    [HttpPost]
+	    public async Task<IHttpActionResult> Config(DirectorySetup setup)
+		{
+			using (var context=new AdContext())
+			{
+				if (setup.Id==default(int))
+				{
+					context.DirectorySetups.Add(setup);
+				}
+				else
+				{
+					var data = context.DirectorySetups.Find(setup.Id);
+					if (data != null)
+					{
+						data.DomainName = setup.DomainName;
+						data.IpAddress = setup.IpAddress;
+						data.ServiceUserName = setup.ServiceUserName;
+						data.ServicePassword = setup.ServicePassword;
+					}
+				}
+				await context.SaveChangesAsync();
+				return Ok(new {state=true, message ="setup successful"});
+			}
+		}
 
         [Authorize]
         [Route("{term}")]
